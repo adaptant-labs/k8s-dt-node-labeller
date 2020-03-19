@@ -56,11 +56,6 @@ func main() {
 	}
 
 	for k, v := range compatMap {
-		fmt.Printf("%s: %d\n", createLabelPrefix(k, true, true), v)
-	}
-
-	labels := generateLabels()
-	for _, v := range labels {
-		fmt.Println(createLabelPrefix(v, true, false))
+		fmt.Printf("%s: %d\n", createLabelPrefix(k, true), v)
 	}
 }
