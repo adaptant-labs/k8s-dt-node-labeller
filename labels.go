@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	labelNamespace = "sodalite.eu"
+	labelNamespace = "devicetree.org"
 )
 
 func createLabelPrefix(name string, experimental bool) string {
@@ -17,5 +17,5 @@ func createLabelPrefix(name string, experimental bool) string {
 		s = ""
 	}
 
-	return fmt.Sprintf("%s%s/dt.%s", s, labelNamespace, name)
+	return fmt.Sprintf("%s%s/%s", s, labelNamespace, name)
 }
