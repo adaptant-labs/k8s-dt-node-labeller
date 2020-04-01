@@ -90,12 +90,14 @@ func parseDeviceTree(nodeNames []string) error {
 
 func main() {
 	var n string
+	var d bool
 
+	flag.BoolVar(&d, "d", false, "Display detected devicetree nodes")
 	flag.StringVar(&n, "n", "", "Additional devicetree node names")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "devicetree Node Labeller for Kubernetes\n")
-		fmt.Fprintf(os.Stderr, "Usage: k8s-dt-node-labeller [flags]\n\n")
+		fmt.Fprintf(os.Stderr, "Usage: k8s-dt-node-labeller [flags] [-n devicetree nodes...]\n\n")
 		flag.PrintDefaults()
 	}
 
@@ -125,11 +127,15 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Discovered the following devicetree properties:\n\n")
+	if d {
+		fmt.Printf("Discovered the following devicetree properties:\n\n")
 
-	// Iterate over the parsed map
-	for k, v := range compatMap {
-		fmt.Printf("%s: %d\n", createLabelPrefix(k, true), v)
+		// Iterate over the parsed map
+		for k, v := range compatMap {
+			fmt.Printf("%s: %d\n", createLabelPrefix(k, true), v)
+		}
+
+		os.Exit(0)
 	}
 
 	logf.SetLogger(zap.New(zap.UseDevMode(false)))
@@ -158,18 +164,14 @@ func main() {
 
 	// By default, only run node-local. This is achieved by matching the
 	// hostname of the system we are running on against the hostname
-	//tagged as part of the node's metadata.
+	// tagged as part of the node's metadata.
 	pred := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			hostname, err := os.Hostname()
 			if err != nil {
 				return false
 			}
-			if hostname == e.Meta.GetName() {
-				entryLog.Info("Labelling", hostname)
-				return true
-			}
-			return false
+			return hostname == e.Meta.GetName()
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			return false

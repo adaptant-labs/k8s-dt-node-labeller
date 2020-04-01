@@ -11,13 +11,26 @@ Kubernetes clusters, as well as for targeting heterogeneous accelerators in Edge
 
 ## Usage
 
-The node labeller is further expected to be run node-local, and will need to be invoked on each individual node
+The node labeller is expected to be run node-local, and will need to be invoked on each individual node
 requiring its own specific devicetree parsing and labelling.
+
+```
+$ k8s-dt-node-labeller --help
+devicetree Node Labeller for Kubernetes
+Usage: k8s-dt-node-labeller [flags] [-n devicetree nodes...]
+
+  -d	Display detected devicetree nodes
+  -kubeconfig string
+    	Paths to a kubeconfig. Only required if out-of-cluster.
+  -n string
+    	Additional devicetree node names
+
+```
 
 By default, `compatible` strings from the top-level `/` node are discovered and converted to node labels.
 
 ```
-$ k8s-dt-node-labeller
+$ k8s-dt-node-labeller -d
 Discovered the following devicetree properties:
 
 beta.devicetree.org/nvidia-jetson-nano: 1
@@ -27,7 +40,7 @@ beta.devicetree.org/nvidia-tegra210: 1
 additional node specifications are possible via the `-n` flag, as below:
 
 ```
-$ k8s-dt-node-labeller -n gpu pwm-fan
+$ k8s-dt-node-labeller -d -n gpu pwm-fan
 Discovered the following devicetree properties:
 
 beta.devicetree.org/nvidia-jetson-nano: 1
@@ -35,6 +48,43 @@ beta.devicetree.org/nvidia-tegra210: 1
 beta.devicetree.org/nvidia-tegra210-gm20b: 1
 beta.devicetree.org/nvidia-gm20b: 1
 beta.devicetree.org/pwm-fan: 1
+```
+
+In order to submit the labels to the cluster, ensure a valid kubeconfig can be found (e.g. by setting the `KUBECONFIG`
+environment variable, or through specifying the location with the `-kubeconfig` parameter) and execute the node
+labeller as-is:
+
+```
+$ k8s-dt-node-labeller 
+{"level":"info","ts":1585701002.694782,"logger":"k8s-dt-node-labeller.entrypoint","msg":"setting up manager"}
+{"level":"info","ts":1585701003.1179338,"logger":"controller-runtime.metrics","msg":"metrics server is starting to listen","addr":":8080"}
+{"level":"info","ts":1585701003.118381,"logger":"k8s-dt-node-labeller.entrypoint","msg":"Setting up controller"}
+{"level":"info","ts":1585701003.1185818,"logger":"k8s-dt-node-labeller.entrypoint","msg":"starting manager"}
+{"level":"info","ts":1585701003.1190712,"logger":"controller-runtime.manager","msg":"starting metrics server","path":"/metrics"}
+{"level":"info","ts":1585701003.1193638,"logger":"controller-runtime.controller","msg":"Starting EventSource","controller":"k8s-dt-node-labeller","source":"kind source: /, Kind="}
+{"level":"info","ts":1585701003.2218263,"logger":"controller-runtime.controller","msg":"Starting Controller","controller":"k8s-dt-node-labeller"}
+{"level":"info","ts":1585701003.222448,"logger":"controller-runtime.controller","msg":"Starting workers","controller":"k8s-dt-node-labeller","worker count":1}
+...
+```
+
+After which the node labels can be viewed from `kubectl`:
+
+```
+$ kubectl describe node jetson-nano
+Name:               jetson-nano
+Roles:              <none>
+Labels:             beta.devicetree.org/nvidia-jetson-nano=1
+                    beta.devicetree.org/nvidia-tegra210=1
+                    beta.kubernetes.io/arch=arm64
+                    beta.kubernetes.io/instance-type=k3s
+                    beta.kubernetes.io/os=linux
+                    k3s.io/hostname=jetson-nano
+                    k3s.io/internal-ip=192.168.xxx.xxx
+                    kubernetes.io/arch=arm64
+                    kubernetes.io/hostname=jetson-nano
+                    kubernetes.io/os=linux
+                    node.kubernetes.io/instance-type=k3s
+                    ...
 ```
 
 ## Acknowledgements
