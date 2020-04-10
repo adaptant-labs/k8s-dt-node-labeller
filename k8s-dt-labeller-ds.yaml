@@ -1,0 +1,58 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: dt-labeller
+  namespace: kube-system
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:dt-labeller
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list", "watch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:dt-labeller
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+subjects:
+  - kind: ServiceAccount
+    name: dt-labeller
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: system:dt-labeller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dt-labeller
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: dt-labeller
+  template:
+    metadata:
+      labels:
+        name: dt-labeller
+    spec:
+      # Restrict to devicetree-capable nodes
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+      - image: adaptant/k8s-dt-node-labeller:latest
+        name: dt-labeller
+        securityContext:
+          # Needed for /sys/firmware access
+          privileged: true
+      serviceAccountName: dt-labeller
