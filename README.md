@@ -28,7 +28,8 @@ specific labels are able to be scheduled and placed appropriately.
 Labelling is possible in a number of different ways:
 - Running Node-Local via the CLI App
 - Running Node-Local via Docker
-- Deploying as a Kubernetes DaemonSet
+- Deploying as a Kubernetes DaemonSet directly
+- Deploying as part of a combined Kubernetes NFD DaemonSet
 
 Regardless of the method of deployment, the labels will be generated and applied to the local node.
 
