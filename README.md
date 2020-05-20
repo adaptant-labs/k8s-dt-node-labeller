@@ -9,7 +9,8 @@ It is inspired by and re-uses much of the Kubernetes controller plumbing from th
 `k8s-dt-node-labeller` was developed in order to facilitate targeted deployments into hybrid (e.g. armhf, arm64)
 Kubernetes clusters, as well as for targeting heterogeneous accelerators in Edge deployments - specifically those that
 show up as platform devices (FPGAs, embedded GPUs, etc.) as opposed to those that are dynamically discoverable at
-run-time via bus enumeration (e.g. USB, PCI).
+run-time via bus enumeration (e.g. USB, PCI). The latter cases are handled by the official [node-feature-discovery]
+(NFD) labeller, which can be used in conjunction with `k8s-dt-node-labeller` for more comprehensive node labelling.
 
 ## Overview
 
@@ -58,6 +59,7 @@ devicetree Node Labeller for Kubernetes
 Usage: k8s-dt-node-labeller [flags] [-n devicetree nodes...]
 
   -d	Display detected devicetree nodes
+  -f	Write detected features to NFD features file
   -kubeconfig string
     	Paths to a kubeconfig. Only required if out-of-cluster.
   -n string
@@ -129,12 +131,26 @@ An example deployment configuration for a DaemonSet is provided in `k8s-dt-label
 applied to the running cluster:
 
 ```
-$ kubectl apply -f k8s-dt-labeller-ds.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/adaptant-labs/k8s-dt-node-labeller/k8s-dt-labeller-ds.yaml
 ```
 
 This will create a special `dt-labeller` service account, cluster role, and binding with the permission to list and
 reconcile nodes. Note that as the labeller requires access to an unmasked `/sys/firmware`, it must also be run in a
 privileged securityContext.
+
+### Deploying with NFD
+
+When used together with NFD `k8s-dt-node-labeller` runs in one-shot mode as an init container, providing a static list
+of discovered features and labels to pass off to NFD, for use with its `local` feature discovery.
+
+```
+$ kubectl apply -f https://raw.githubusercontent.com/adaptant-labs/k8s-dt-node-labeller/k8s-dt-labeller-nfd.yaml
+```
+
+In this configuration, the `nfd-master`, `nfd-worker`, and `k8s-dt-node-labeller` are all deployed in the same Pod in
+order to facilitate node-local labelling. While the `k8s-dt-node-labeller` requires access to an unmasked
+`/sys/firmware`, and must, therefore, run in a privileged securityContext, the NFD application containers are able to
+run without elevated permissions.
 
 ### Verifying Labelling
 
@@ -178,3 +194,4 @@ version of which can be found in the LICENSE file included in the distribution.
 [overview]: https://raw.githubusercontent.com/adaptant-labs/k8s-dt-node-labeller/master/overview.png
 [amdgpu-node-labeller]: https://github.com/RadeonOpenCompute/k8s-device-plugin/tree/master/cmd/k8s-node-labeller
 [adaptant/k8s-dt-node-labeller]: https://hub.docker.com/repository/docker/adaptant/k8s-dt-node-labeller
+[node-feature-discovery]: https://github.com/kubernetes-sigs/node-feature-discovery

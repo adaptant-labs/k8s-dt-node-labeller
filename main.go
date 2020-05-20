@@ -20,9 +20,13 @@ import (
 	"strings"
 )
 
+type CompatInfo map[string]int
+
 var (
-	compatMap              = make(map[string]int)
+	compatMap              = make(CompatInfo)
 	log                    = logf.Log.WithName("k8s-dt-node-labeller")
+	featureFilesDir        = "/etc/kubernetes/node-feature-discovery/features.d/"
+	nfdFeaturesFile        = "devicetree-features"
 	vendorNormalizationMap = map[string]string{
 		"xlnx": "xilinx",
 	}
@@ -88,11 +92,52 @@ func parseDeviceTree(nodeNames []string) error {
 	return nil
 }
 
+func (ci CompatInfo) writeNfdFeatures() error {
+	// Create the directory if it doesn't exist
+	err := os.MkdirAll(featureFilesDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	// Create the features file
+	featuresFilePath := featureFilesDir + nfdFeaturesFile
+	features, err := os.Create(featuresFilePath)
+	if err != nil {
+		return err
+	}
+	defer features.Close()
+
+	fmt.Printf("Writing out discovered features to %s\n", featuresFilePath)
+
+	// Write out each feature
+	for k, v := range compatMap {
+		label := fmt.Sprintf("%s: %d\n", createLabelPrefix(k, true), v)
+		_, err := features.WriteString(label)
+		if err != nil {
+			return err
+		}
+	}
+
+	features.Sync()
+	return nil
+}
+
+func (ci CompatInfo) dumpFeatures() {
+	fmt.Printf("Discovered the following devicetree properties:\n\n")
+
+	// Iterate over the parsed map
+	for k, v := range compatMap {
+		fmt.Printf("%s: %d\n", createLabelPrefix(k, true), v)
+	}
+}
+
 func main() {
 	var n string
 	var d bool
+	var nfd bool
 
 	flag.BoolVar(&d, "d", false, "Display detected devicetree nodes")
+	flag.BoolVar(&nfd, "f", false, "Write detected features to NFD features file")
 	flag.StringVar(&n, "n", "", "Additional devicetree node names")
 
 	flag.Usage = func() {
@@ -128,11 +173,15 @@ func main() {
 	}
 
 	if d {
-		fmt.Printf("Discovered the following devicetree properties:\n\n")
+		compatMap.dumpFeatures()
+		os.Exit(0)
+	}
 
-		// Iterate over the parsed map
-		for k, v := range compatMap {
-			fmt.Printf("%s: %d\n", createLabelPrefix(k, true), v)
+	if nfd {
+		err = compatMap.writeNfdFeatures()
+		if err != nil {
+			fmt.Printf("Failed to write feature labels: %s\n", err.Error())
+			os.Exit(1)
 		}
 
 		os.Exit(0)
