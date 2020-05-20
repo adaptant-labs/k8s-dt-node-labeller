@@ -111,7 +111,7 @@ func (ci CompatInfo) writeNfdFeatures() error {
 
 	// Write out each feature
 	for k, v := range compatMap {
-		label := fmt.Sprintf("%s: %d\n", createLabelPrefix(k, true), v)
+		label := fmt.Sprintf("%s=%d\n", createLabelPrefix(k, true), v)
 		_, err := features.WriteString(label)
 		if err != nil {
 			return err
