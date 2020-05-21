@@ -86,7 +86,14 @@ func parseDeviceTree(nodeNames []string) error {
 	}
 
 	for _, node := range nodeNames {
+		// Match nodes with an exact name match
 		t.MatchNode(node, walkNode)
+
+		// Detect node names matching either of the following formats:
+		//	name@<address>
+		//	name<id>@<address>
+		regex := fmt.Sprintf("^(%s)([0-9]+|)@.*$", node)
+		t.EachNodeMatching(regex, walkNode)
 	}
 
 	return nil

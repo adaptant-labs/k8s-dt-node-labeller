@@ -2,6 +2,8 @@ module k8s-dt-node-labeller
 
 go 1.13
 
+replace github.com/platinasystems/fdt => github.com/adaptant-labs/fdt v1.0.2-0.20200521120921-a1cf022f5f28
+
 require (
 	github.com/go-logr/logr v0.1.0
 	github.com/platinasystems/fdt v1.0.1
