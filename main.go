@@ -25,6 +25,7 @@ type CompatInfo map[string]int
 var (
 	compatMap              = make(CompatInfo)
 	log                    = logf.Log.WithName("k8s-dt-node-labeller")
+	defaultNodes           = []string{"cpu", "gpu" }
 	featureFilesDir        = "/etc/kubernetes/node-feature-discovery/features.d/"
 	nfdFeaturesFile        = "devicetree-features"
 	vendorNormalizationMap = map[string]string{
@@ -138,6 +139,24 @@ func (ci CompatInfo) dumpFeatures() {
 	}
 }
 
+func appendNodeIfNotExist(nodes []string, name string) []string {
+	for _, node := range nodes {
+		if node == name {
+			return nodes
+		}
+	}
+
+	return append(nodes, name)
+}
+
+func appendNodesIfNotExist(nodes[] string, names ...string) []string {
+	for _, name := range names {
+		nodes = appendNodeIfNotExist(nodes, name)
+	}
+
+	return nodes
+}
+
 func main() {
 	var n string
 	var d bool
@@ -159,12 +178,15 @@ func main() {
 	// By default check for top-of-tree compatible strings
 	nodeNames := []string{"/"}
 
+	// And any specified default nodes
+	nodeNames = append(nodeNames, defaultNodes...)
+
 	// Include any additional node names specified
 	if len(n) > 0 {
-		nodeNames = append(nodeNames, n)
+		nodeNames = appendNodeIfNotExist(nodeNames, n)
 
 		if len(tail) > 0 {
-			nodeNames = append(nodeNames, tail...)
+			nodeNames = appendNodesIfNotExist(nodeNames, tail...)
 		}
 	} else {
 		// Check for any invalid or unhandled args
