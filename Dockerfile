@@ -1,6 +1,7 @@
 FROM golang as builder
 
 ARG KUBECONFIG
+ARG NODE_NAME
 
 ENV GO111MODULE=on
 

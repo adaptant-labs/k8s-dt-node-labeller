@@ -60,7 +60,12 @@ spec:
       nodeSelector:
           kubernetes.io/arch: arm64
       initContainers:
-        - image: adaptant/k8s-dt-node-labeller:latest
+        - env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: adaptant/k8s-dt-node-labeller:latest
           name: dt-labeller
           args:
             - "-f"

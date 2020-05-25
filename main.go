@@ -157,6 +157,19 @@ func appendNodesIfNotExist(nodes[] string, names ...string) []string {
 	return nodes
 }
 
+func getNodeName() (string, error) {
+	// Within the Kubernetes Pod, the hostname provides the Pod name, rather than the node name, so we pass in the
+	// node name via the NODE_NAME environment variable instead.
+	nodeName := os.Getenv("NODE_NAME")
+	if len(nodeName) > 0 {
+		return nodeName, nil
+	}
+
+	// If the NODE_NAME environment variable is unset, fall back on hostname matching (e.g. when running outside of
+	// a Kubernetes deployment).
+	return os.Hostname()
+}
+
 func main() {
 	var n string
 	var d bool
@@ -245,7 +258,7 @@ func main() {
 	// tagged as part of the node's metadata.
 	pred := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			hostname, err := os.Hostname()
+			hostname, err := getNodeName()
 			if err != nil {
 				return false
 			}

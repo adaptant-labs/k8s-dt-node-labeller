@@ -21,7 +21,7 @@ type reconcileNodeLabels struct {
 var _ reconcile.Reconciler = &reconcileNodeLabels{}
 
 func (r *reconcileNodeLabels) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	// set up a convinient log object so we don't have to type request over and over again
+	// set up a convenient log object so we don't have to type request over and over again
 	log := r.log.WithValues("request", request)
 
 	node := &corev1.Node{}
